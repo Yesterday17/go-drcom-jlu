@@ -78,11 +78,17 @@ func New(cfg *config.Config) (s *Service) {
 		logoutCh:       make(chan struct{}, 1),
 	}
 
-	if udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", authServer, authPort)); err != nil {
+	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", authServer, authPort))
+	if err != nil {
 		log.Fatalf("[GDJ] net.ResolveUDPAddr(udp4, %s) error(%v) ", fmt.Sprintf("%s:%s", authServer, authPort), err)
-	} else if s.conn, err = net.DialUDP("udp", nil, udpAddr); err != nil {
+	}
+
+	conn, err := net.DialTimeout("udp", udpAddr.String(), time.Second)
+	if err != nil {
 		log.Fatalf("[GDJ] net.DialUDP(udp, %v, %v) error(%v)", nil, udpAddr, err)
 	}
+
+	s.conn = conn.(*net.UDPConn)
 	return
 }
 
