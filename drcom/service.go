@@ -115,10 +115,6 @@ func (s *Service) Start() {
 	log.Println("[GDJ][INFO] Starting keepalive daemon...")
 	go s.aliveproc()
 	log.Println("[GDJ][INFO] Successfully started keepalive")
-
-	log.Println("[GDJ][INFO] Starting logout daemon...")
-	go s.logoutproc()
-	log.Println("[GDJ][INFO] Starting started logout")
 }
 
 func (s *Service) aliveproc() {
@@ -127,7 +123,7 @@ func (s *Service) aliveproc() {
 		select {
 		case _, ok := <-s.logoutCh:
 			if !ok {
-				log.Println("[GDJ][INFO] Exiting keepalive...")
+				log.Println("[GDJ][INFO] Keepalive exited")
 				return
 			}
 		default:
@@ -144,24 +140,22 @@ func (s *Service) aliveproc() {
 	}
 }
 
-func (s *Service) logoutproc() {
-	if _, ok := <-s.logoutCh; !ok {
-		log.Println("[GDJ][Info] Logging out...")
-		if err := s.Challenge(); err != nil {
-			log.Printf("[GDJ][Error] drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
-			return
-		}
-		if err := s.Logout(); err != nil {
-			log.Printf("[GDJ][Error] service.Logout() error(%v)", err)
-			return
-		}
-		log.Println("[GDJ][Info] Logged out")
+func (s *Service) Logout() {
+	log.Println("[GDJ][Info] Logging out...")
+	if err := s.Challenge(); err != nil {
+		log.Printf("[GDJ][Error] drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
+		return
 	}
+	if err := s.logout(); err != nil {
+		log.Printf("[GDJ][Error] service.logout() error(%v)", err)
+		return
+	}
+	log.Println("[GDJ][Info] Logged out")
 }
 
 // Close close service.
 func (s *Service) Close() error {
 	close(s.logoutCh)
-	s.conn.Close()
+	_ = s.conn.Close()
 	return nil
 }

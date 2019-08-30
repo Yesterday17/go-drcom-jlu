@@ -296,8 +296,7 @@ func (s *Service) buf40(first, extra bool) (buf []byte) {
 	return
 }
 
-// Logout logout
-func (s *Service) Logout() (err error) {
+func (s *Service) logout() (err error) {
 	var (
 		r, buf []byte
 		conn   = s.conn

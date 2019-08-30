@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"regexp"
-	"strings"
 )
 
 // Config config struct
@@ -38,13 +36,5 @@ func ReadConfig(path string) (Config, error) {
 		return config, fmt.Errorf("Password cannot be empty")
 	}
 
-	interfaces, _ := net.Interfaces()
-	for _, inte := range interfaces {
-		if strings.ToUpper(inte.HardwareAddr.String()) == strings.ToUpper(config.MAC) &&
-			strings.Contains(inte.Flags.String(), "up") {
-			return config, nil
-		}
-	}
-
-	return config, fmt.Errorf("MAC address not found")
+	return config, nil
 }
