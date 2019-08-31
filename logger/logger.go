@@ -18,7 +18,7 @@ func Info(info string) {
 }
 
 func Infof(format string, v ...interface{}) {
-	infoLogger.Printf(format, v)
+	infoLogger.Printf(format, v...)
 }
 
 func Warn(warn string) {
@@ -26,7 +26,7 @@ func Warn(warn string) {
 }
 
 func Warnf(format string, v ...interface{}) {
-	warnLogger.Printf(format, v)
+	warnLogger.Printf(format, v...)
 }
 
 func Error(error string) {
@@ -34,5 +34,5 @@ func Error(error string) {
 }
 
 func Errorf(format string, v ...interface{}) {
-	errorLogger.Printf(format, v)
+	errorLogger.Printf(format, v...)
 }
