@@ -78,7 +78,7 @@ func main() {
 	// 未检测到对应配置文件的 MAC 地址
 	if activeMAC == "" {
 		logger.Error("No matching MAC address detected")
-		os.Exit(1)
+		os.Exit(10)
 	} else {
 		inf := Interfaces[activeMAC]
 
