@@ -23,7 +23,7 @@ func main() {
 	var err error
 
 	flag.StringVar(&cfgPath, "c", "./config.json", "配置文件的路径")
-	flag.StringVar(&logPath, "l", "./go-drcom-jlu.log", "日志文件的路径")
+	flag.StringVar(&logPath, "l", "", "日志文件的路径, 留空则输出到 stdout")
 	flag.Parse()
 
 	Interfaces = make(map[string]*Interface)
