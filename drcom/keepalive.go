@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Yesterday17/go-drcom-jlu/logger"
 	"math/rand"
+	"time"
 )
 
 var ErrChallengeHeadError = errors.New("challenge receive head is not correct")
@@ -113,4 +114,27 @@ func (c *Client) buf40(first, extra bool) (buf []byte) {
 		buf = append(buf, bytes.Repeat([]byte{0x00}, 40-len(buf))...)
 	}
 	return
+}
+
+func (c *Client) keepalive() {
+	count := 0
+	for {
+		select {
+		case _, ok := <-c.logoutCh:
+			if !ok {
+				logger.Info("Keepalive exited")
+				return
+			}
+		case <-time.After(20 * time.Second):
+			count++
+			logger.Infof("Sending keepalive #%d", count)
+			if err := c.Alive(); err != nil {
+				logger.Errorf("drcom.keepalive.Alive() error(%v)", err)
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			logger.Infof("Keepalive #%d success", count)
+		}
+
+	}
 }

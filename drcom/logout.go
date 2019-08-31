@@ -47,3 +47,16 @@ func (c *Client) packetLogout() (buf []byte) {
 	buf = append(buf, c.tail1...) // [64:80]
 	return
 }
+
+func (c *Client) Logout() {
+	logger.Info("Logging out...")
+	if err := c.Challenge(); err != nil {
+		logger.Errorf("drcomSvc.Challenge(%d) error(%v)", c.ChallengeTimes, err)
+		return
+	}
+	if err := c.logout(); err != nil {
+		logger.Errorf("service.logout() error(%v)", err)
+		return
+	}
+	logger.Info("Logged out")
+}
