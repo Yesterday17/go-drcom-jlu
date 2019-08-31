@@ -1,0 +1,14 @@
+pkgname=go-drcom-jlu
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='JLU drcom client written in golang.'
+arch=('x86_64')
+url="https://github.com/Yesterday17/go-drcom-jlu"
+license=('MIT')
+depends=()
+optdepends=('')
+source=('')
+md5sums=('')
+
+package() {
+}
