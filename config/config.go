@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"strings"
 )
 
 // Config config struct
@@ -25,16 +26,17 @@ func ReadConfig(path string) (Config, error) {
 	}
 
 	if match, _ := regexp.MatchString("(?:[0-9A-Za-z]{2}:){5}[0-9A-Za-z]{2}", config.MAC); !match {
-		return config, fmt.Errorf("Invalid MAC address")
+		return config, fmt.Errorf("invalid MAC address")
 	}
 
 	if match, _ := regexp.MatchString("^[a-z]{4,}\\d{4}$", config.Username); !match {
-		return config, fmt.Errorf("Invalid username")
+		return config, fmt.Errorf("invalid username")
 	}
 
 	if config.Password == "" {
-		return config, fmt.Errorf("Password cannot be empty")
+		return config, fmt.Errorf("password cannot be empty")
 	}
 
+	config.MAC = strings.ToLower(config.MAC)
 	return config, nil
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/Yesterday17/go-drcom-jlu/config"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
-	"github.com/vishvananda/netlink"
 	"log"
 	"os"
 	"os/signal"
@@ -12,38 +11,24 @@ import (
 )
 
 var (
-	isOn      = false
 	activeMAC = ""
-	//isWiFiMode = false
-	wifiMAC  = ""
-	wiredMAC = ""
-	client   *drcom.Service
-	cfg      *config.Config
+	client    *drcom.Service
+	cfg       *config.Config
 )
 
 // return code list
 // -10 failed to parse config file
 
 func main() {
-	var err error
+	Interfaces = make(map[string]*Interface)
 
-	if ssid, inf, err := getWifiName(); err != nil {
-		fmt.Println(err)
-	} else if ssid == "JLU.PC" {
-		//isWiFiMode = true
-		wifiMAC = inf.HardwareAddr.String()
-		activeMAC = wifiMAC
-		fmt.Println("[GDJ][INFO] Wireless network JLU.PC detected")
-		fmt.Println("[GDJ][INFO] Wireless MAC address: " + wifiMAC)
-	} else if ssid == "" {
-		// not connected
-		//fmt.Println(inf)
-	} else {
-		wifiMAC = inf.HardwareAddr.String()
+	if err := initWireless(); err != nil {
+		log.Fatal(err)
 	}
 
-	ch := make(chan netlink.AddrUpdate)
-	initNetList(ch)
+	if err := initWired(); err != nil {
+		log.Fatal(err)
+	}
 
 	// 加载配置文件
 	conf, err := config.ReadConfig("./config.json")
@@ -54,27 +39,43 @@ func main() {
 	}
 
 	// 检查配置文件的 MAC 地址是否与 WiFi / 有线网卡 的 MAC 匹配
-	//if conf.MAC != wiredMAC && conf.MAC != activeMAC {
-	//	fmt.Println("[GDJ][ERROR] Invalid MAC address")
-	//	os.Exit(-10)
-	//}
+	for _, inf := range Interfaces {
+		if inf.Address == conf.MAC {
+			if inf.IsWireless {
+				fmt.Printf("[GDJ][WARN] Wireless MAC address detected, make sure you know what you're doing!")
+			}
+			activeMAC = inf.Address
+			break
+		}
+	}
+
+	// 未检测到对应配置文件的 MAC 地址
+	if activeMAC == "" {
+		log.Fatal("[GDJ][ERROR] No matching MAC address detected")
+	} else {
+		inf := Interfaces[activeMAC]
+		if !inf.Connected {
+			activeMAC = ""
+		} else if inf.IsWireless && inf.SSID != "JLU.PC" {
+			activeMAC = ""
+		}
+	}
 
 	// 全局化
 	cfg = &conf
 
-	go watchNetStatus(ch)
+	go watchNetStatus()
 
 	if activeMAC != "" {
 		client = drcom.New(cfg)
 		client.Start()
-		isOn = true
 	}
 
 	// 处理退出信号
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	for {
-		s := <-sigc
+		s := <-sig
 		log.Printf("[GDJ] Exiting with signal %s", s.String())
 		if client != nil {
 			client.Logout()
