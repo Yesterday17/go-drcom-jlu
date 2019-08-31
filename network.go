@@ -105,7 +105,7 @@ func getSSID(MAC string) (string, error) {
 		}
 
 		for _, inf := range interfaces {
-			if inf.HardwareAddr.String() != MAC {
+			if inf.HardwareAddr.String() != MAC || inf.Name == "" {
 				continue
 			}
 
@@ -116,7 +116,7 @@ func getSSID(MAC string) (string, error) {
 
 			return bss.SSID, nil
 		}
-		return "", fmt.Errorf("no matching mac found")
+		return "", fmt.Errorf("failed to get ssid")
 	}
 }
 
@@ -137,9 +137,13 @@ func watchNetStatus() {
 				update.Attrs().OperState.String() == "up" &&
 				update.Flags >= 65536 &&
 				activeMAC == "" {
+
 				MAC := update.Attrs().HardwareAddr.String()
-				log.Println(update.Attrs())
+
 				inf := Interfaces[MAC]
+				if inf == nil {
+					continue
+				}
 
 				if inf.IsWireless {
 					if ssid, err := getSSID(inf.Address); err != nil {
@@ -147,7 +151,6 @@ func watchNetStatus() {
 						continue
 					} else {
 						inf.SSID = ssid
-
 						if ssid != "JLU.PC" {
 							logger.Info("Skipping non-JLU.PC WiFI")
 							continue
@@ -166,6 +169,9 @@ func watchNetStatus() {
 			} else if update.Flags < 65536 && activeMAC != "" {
 				MAC := update.Attrs().HardwareAddr.String()
 				inf := Interfaces[MAC]
+				if inf == nil {
+					continue
+				}
 
 				_ = client.Close()
 				logger.Info("Network disconnected")
