@@ -13,7 +13,7 @@ import (
 
 var (
 	activeMAC = ""
-	client    *drcom.Service
+	client    *drcom.Client
 	cfg       *drcom.Config
 )
 

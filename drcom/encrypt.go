@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-func (s *Service) md5(items ...[]byte) (ret []byte) {
+func (c *Client) md5(items ...[]byte) (ret []byte) {
 	for _, v := range items {
-		s.md5Ctx.Write(v)
+		c.md5Ctx.Write(v)
 	}
-	ret = s.md5Ctx.Sum(nil)
-	s.md5Ctx.Reset()
+	ret = c.md5Ctx.Sum(nil)
+	c.md5Ctx.Reset()
 	return
 }
 
@@ -22,7 +22,7 @@ func MACHex2Bytes(mac string) (res []byte, err error) {
 	return hex.DecodeString(as)
 }
 
-func (s *Service) ror(md5a, password []byte) (ret []byte) {
+func (c *Client) ror(md5a, password []byte) (ret []byte) {
 	l := len(password)
 	ret = make([]byte, l)
 	for i := 0; i < l; i++ {
@@ -32,7 +32,7 @@ func (s *Service) ror(md5a, password []byte) (ret []byte) {
 	return
 }
 
-func (s *Service) checkSum(data []byte) (ret []byte) {
+func (c *Client) checkSum(data []byte) (ret []byte) {
 	// 1234 = 0x_00_00_04_d2
 	sum := []byte{0x00, 0x00, 0x04, 0xd2}
 	l := len(data)
@@ -73,11 +73,11 @@ func (s *Service) checkSum(data []byte) (ret []byte) {
 	return
 }
 
-func (s *Service) extra() bool {
-	return s.Count%21 == 0
+func (c *Client) extra() bool {
+	return c.Count%21 == 0
 }
 
-func (s *Service) crc(buf []byte) (ret []byte) {
+func (c *Client) crc(buf []byte) (ret []byte) {
 	sum := make([]byte, 2)
 	l := len(buf)
 	for i := 0; i < l-1; i += 2 {

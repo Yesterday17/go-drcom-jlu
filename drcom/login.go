@@ -13,16 +13,16 @@ var (
 	ErrUnknown       = errors.New("login failed: unknown error")
 )
 
-func (s *Service) Login() (err error) {
+func (c *Client) Login() (err error) {
 	var r, buf []byte
 
-	buf = s.packetLogin()
-	if err = s.WriteWithTimeout(buf); err != nil {
+	buf = c.packetLogin()
+	if err = c.WriteWithTimeout(buf); err != nil {
 		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	r = make([]byte, 128)
-	if err = s.ReadWithTimeout(r); err != nil {
+	if err = c.ReadWithTimeout(r); err != nil {
 		logger.Errorf("conn.Read() error(%v)", err)
 		return
 	}
@@ -40,46 +40,46 @@ func (s *Service) Login() (err error) {
 	}
 	// 保存 tail1. 构造 keep38 要用 md5a(在mkptk中保存) 和 tail1
 	// 注销也要用 tail1
-	copy(s.tail1, r[23:39])
+	copy(c.tail1, r[23:39])
 	return
 }
 
-func (s *Service) packetLogin() (buf []byte) {
+func (c *Client) packetLogin() (buf []byte) {
 	var md5a, md5b, md5c, mac []byte
 
-	buf = make([]byte, 0, 334+(len(s.config.Password)-1)/4*4)
-	buf = append(buf, _codeIn, _type, _eof, byte(len(s.config.Username)+20)) // [0:4]
+	buf = make([]byte, 0, 334+(len(c.config.Password)-1)/4*4)
+	buf = append(buf, _codeIn, _type, _eof, byte(len(c.config.Username)+20)) // [0:4]
 
 	// md5a
-	md5a = s.md5([]byte{_codeIn, _type}, s.salt, []byte(s.config.Password))
-	copy(s.md5a, md5a)
+	md5a = c.md5([]byte{_codeIn, _type}, c.salt, []byte(c.config.Password))
+	copy(c.md5a, md5a)
 	buf = append(buf, md5a...) // [4:20]
 
 	// username
 	user := make([]byte, 36)
-	copy(user, s.config.Username)
+	copy(user, c.config.Username)
 	buf = append(buf, user...)                    // [20:56]
 	buf = append(buf, _controlCheck, _adapterNum) //[56:58]
 
 	// md5a xor mac
-	mac, _ = MACHex2Bytes(s.config.MAC)
+	mac, _ = MACHex2Bytes(c.config.MAC)
 	for i := 0; i < 6; i++ {
-		mac[i] = mac[i] ^ s.md5a[i]
+		mac[i] = mac[i] ^ c.md5a[i]
 	}
 	buf = append(buf, mac...) // [58:64]
 
 	// md5b
-	md5b = s.md5([]byte{0x01}, []byte(s.config.Password), []byte(s.salt), []byte{0x00, 0x00, 0x00, 0x00})
+	md5b = c.md5([]byte{0x01}, []byte(c.config.Password), []byte(c.salt), []byte{0x00, 0x00, 0x00, 0x00})
 	buf = append(buf, md5b...)                      // [64:80]
 	buf = append(buf, byte(0x01))                   // [80:81]
-	buf = append(buf, s.clientIP...)                // [81:85]
+	buf = append(buf, c.clientIP...)                // [81:85]
 	buf = append(buf, bytes.Repeat(_emptyIP, 3)...) // [85:97]
 
 	// md5c
 	tmp := make([]byte, len(buf))
 	copy(tmp, buf)
 	tmp = append(tmp, []byte{0x14, 0x00, 0x07, 0x0b}...)
-	md5c = s.md5(tmp)
+	md5c = c.md5(tmp)
 	buf = append(buf, md5c[:8]...)   // [97:105]
 	buf = append(buf, _ipDog)        // [105:106]
 	buf = append(buf, _delimiter...) // [106:110]
@@ -115,19 +115,19 @@ func (s *Service) packetLogin() (buf []byte) {
 	buf = append(buf, bytes.Repeat([]byte{0x00}, 24)...) // [286:310]
 	buf = append(buf, _authVersion...)                   // [310:312]
 	buf = append(buf, 0x00)                              // [312:313]
-	pwdLen := len(s.config.Password)
+	pwdLen := len(c.config.Password)
 	if pwdLen > 16 {
 		pwdLen = 16
 	}
 	buf = append(buf, byte(pwdLen)) // [313:314]
-	ror := s.ror(s.md5a, []byte(s.config.Password))
+	ror := c.ror(c.md5a, []byte(c.config.Password))
 	buf = append(buf, ror[:pwdLen]...)       // [314:314+pwdLen]
 	buf = append(buf, []byte{0x02, 0x0c}...) // [314+l:316+l]
 	tmp = make([]byte, 0, len(buf))
 	copy(tmp, buf)
 	tmp = append(tmp, []byte{0x01, 0x26, 0x07, 0x11, 0x00, 0x00}...)
 	tmp = append(tmp, mac[:4]...)
-	sum := s.checkSum(tmp)
+	sum := c.checkSum(tmp)
 	buf = append(buf, sum[:4]...)            // [316+l,320+l]
 	buf = append(buf, []byte{0x00, 0x00}...) // [320+l,322+l]
 	buf = append(buf, mac...)                // [322+l,328+l]

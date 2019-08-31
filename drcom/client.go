@@ -50,7 +50,7 @@ type Config struct {
 	Password string `json:"password"`
 }
 
-type Service struct {
+type Client struct {
 	config         *Config
 	md5Ctx         hash.Hash
 	salt           []byte // [4:8]
@@ -66,8 +66,8 @@ type Service struct {
 }
 
 // New create service instance and return.
-func New(cfg *Config) (s *Service) {
-	s = &Service{
+func New(cfg *Config) (c *Client) {
+	c = &Client{
 		config:         cfg,
 		md5Ctx:         md5.New(),
 		md5a:           make([]byte, 16),
@@ -93,39 +93,39 @@ func New(cfg *Config) (s *Service) {
 		os.Exit(1)
 	}
 
-	s.conn = conn.(*net.UDPConn)
+	c.conn = conn.(*net.UDPConn)
 	return
 }
 
-func (s *Service) Start() {
+func (c *Client) Start() {
 	logger.Info("Starting...")
 
 	// Challenge
 	logger.Info("Challenging...")
-	if err := s.Challenge(); err != nil {
-		logger.Errorf("Error #%d: %v", s.ChallengeTimes, err)
+	if err := c.Challenge(); err != nil {
+		logger.Errorf("Error #%d: %v", c.ChallengeTimes, err)
 		return
 	}
 	logger.Info("Successfully challenged")
 
 	// Login
 	logger.Info("Logining...")
-	if err := s.Login(); err != nil {
+	if err := c.Login(); err != nil {
 		logger.Errorf("Login error: %v", err)
 		return
 	}
 	logger.Info("Successfully logged in")
 
 	logger.Info("Starting keepalive daemon...")
-	go s.aliveproc()
+	go c.aliveproc()
 	logger.Info("Successfully started keepalive")
 }
 
-func (s *Service) aliveproc() {
+func (c *Client) aliveproc() {
 	count := 0
 	for {
 		select {
-		case _, ok := <-s.logoutCh:
+		case _, ok := <-c.logoutCh:
 			if !ok {
 				logger.Info("Keepalive exited")
 				return
@@ -134,7 +134,7 @@ func (s *Service) aliveproc() {
 		}
 		count++
 		logger.Infof("Sending keepalive #%d", count)
-		if err := s.Alive(); err != nil {
+		if err := c.Alive(); err != nil {
 			logger.Errorf("drcomSvc.Alive() error(%v)", err)
 			time.Sleep(time.Second * 5)
 			continue
@@ -144,13 +144,13 @@ func (s *Service) aliveproc() {
 	}
 }
 
-func (s *Service) Logout() {
+func (c *Client) Logout() {
 	logger.Info("Logging out...")
-	if err := s.Challenge(); err != nil {
-		logger.Errorf("drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
+	if err := c.Challenge(); err != nil {
+		logger.Errorf("drcomSvc.Challenge(%d) error(%v)", c.ChallengeTimes, err)
 		return
 	}
-	if err := s.logout(); err != nil {
+	if err := c.logout(); err != nil {
 		logger.Errorf("service.logout() error(%v)", err)
 		return
 	}
@@ -158,8 +158,24 @@ func (s *Service) Logout() {
 }
 
 // Close close service.
-func (s *Service) Close() error {
-	close(s.logoutCh)
-	_ = s.conn.Close()
+func (c *Client) Close() error {
+	close(c.logoutCh)
+	_ = c.conn.Close()
 	return nil
+}
+
+func (c *Client) WriteWithTimeout(b []byte) (err error) {
+	if err = c.conn.SetWriteDeadline(time.Now().Add(time.Second)); err != nil {
+		return
+	}
+	_, err = c.conn.Write(b)
+	return
+}
+
+func (c *Client) ReadWithTimeout(b []byte) (err error) {
+	if err = c.conn.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+		return
+	}
+	_, err = c.conn.Read(b)
+	return
 }
