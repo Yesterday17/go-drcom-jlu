@@ -4,11 +4,8 @@ After=network.target
 Wants=network.target
 
 [Service]
-# useradd gdj -s /usr/sbin/nologin
-# User=gdj
-# Group=gdj
 Type=simple
-ExecStart=/usr/bin/go-drcom-jlu/go-drcom-jlu -config /etc/go-drcom-jlu/config.json
+ExecStart=/usr/bin/go-drcom-jlu -config /etc/go-drcom-jlu/config.json
 Restart=on-failure
 # Don't restart in the case of configuration error
 RestartPreventExitStatus=10
