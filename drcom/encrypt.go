@@ -2,17 +2,8 @@ package drcom
 
 import (
 	"encoding/hex"
-	"errors"
 	"math/big"
 	"strings"
-)
-
-const (
-	_defaultMACHexLen = 12
-)
-
-var (
-	ErrMACAddrLenError = errors.New("length of mac address is not correct")
 )
 
 func (s *Service) md5(items ...[]byte) (ret []byte) {
@@ -27,10 +18,6 @@ func (s *Service) md5(items ...[]byte) (ret []byte) {
 // MACHex2Bytes convert mac address to bytes, the input mac format should be 2a:1b:4c:fe:a9:e9.
 func MACHex2Bytes(mac string) (res []byte, err error) {
 	as := strings.Replace(mac, ":", "", -1)
-	if len(as) != _defaultMACHexLen {
-		err = ErrMACAddrLenError
-		return
-	}
 	res = make([]byte, 0, 6)
 	return hex.DecodeString(as)
 }
