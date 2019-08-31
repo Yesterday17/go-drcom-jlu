@@ -18,7 +18,7 @@ var (
 )
 
 // return code list
-// -10 failed to parse config file
+// 10 failed to parse config file
 
 func main() {
 	var cfgPath, logPath string
@@ -61,7 +61,7 @@ func main() {
 	cfg, err = ReadConfig(cfgPath)
 	if err != nil {
 		log.Println(err)
-		os.Exit(-10)
+		os.Exit(10)
 	}
 
 	// 检查配置文件的 MAC 地址是否与 WiFi / 有线网卡 的 MAC 匹配
