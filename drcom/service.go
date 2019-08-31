@@ -83,12 +83,12 @@ func New(cfg *Config) (s *Service) {
 
 	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", authServer, authPort))
 	if err != nil {
-		log.Fatalf("[GDJ] net.ResolveUDPAddr(udp4, %s) error(%v) ", fmt.Sprintf("%s:%s", authServer, authPort), err)
+		log.Fatalf("net.ResolveUDPAddr(udp4, %s) error(%v) ", fmt.Sprintf("%s:%s", authServer, authPort), err)
 	}
 
 	conn, err := net.DialTimeout("udp", udpAddr.String(), time.Second)
 	if err != nil {
-		log.Fatalf("[GDJ] net.DialUDP(udp, %v, %v) error(%v)", nil, udpAddr, err)
+		log.Fatalf("net.DialUDP(udp, %v, %v) error(%v)", nil, udpAddr, err)
 	}
 
 	s.conn = conn.(*net.UDPConn)
@@ -97,27 +97,27 @@ func New(cfg *Config) (s *Service) {
 
 // Start start drcom client
 func (s *Service) Start() {
-	log.Println("[GDJ][INFO] Starting...")
+	log.Println("[INFO] Starting...")
 
 	// Challenge
-	log.Println("[GDJ][INFO] Challenging...")
+	log.Println("[INFO] Challenging...")
 	if err := s.Challenge(); err != nil {
-		log.Printf("[GDJ][ERROR] Error #%d: %v", s.ChallengeTimes, err)
+		log.Printf("[ERROR] Error #%d: %v", s.ChallengeTimes, err)
 		return
 	}
-	log.Println("[GDJ][INFO] Successfully challenged")
+	log.Println("[INFO] Successfully challenged")
 
 	// Login
-	log.Println("[GDJ][INFO] Logining...")
+	log.Println("[INFO] Logining...")
 	if err := s.Login(); err != nil {
-		log.Printf("[GDJ][ERROR] Login error: %v", err)
+		log.Printf("[ERROR] Login error: %v", err)
 		return
 	}
-	log.Println("[GDJ][INFO] Successfully logged in")
+	log.Println("[INFO] Successfully logged in")
 
-	log.Println("[GDJ][INFO] Starting keepalive daemon...")
+	log.Println("[INFO] Starting keepalive daemon...")
 	go s.aliveproc()
-	log.Println("[GDJ][INFO] Successfully started keepalive")
+	log.Println("[INFO] Successfully started keepalive")
 }
 
 func (s *Service) aliveproc() {
@@ -126,34 +126,34 @@ func (s *Service) aliveproc() {
 		select {
 		case _, ok := <-s.logoutCh:
 			if !ok {
-				log.Println("[GDJ][INFO] Keepalive exited")
+				log.Println("[INFO] Keepalive exited")
 				return
 			}
 		default:
 		}
 		count++
-		log.Printf("[GDJ][INFO] Sending keepalive #%d", count)
+		log.Printf("[INFO] Sending keepalive #%d", count)
 		if err := s.Alive(); err != nil {
-			log.Printf("[GDJ][Error] drcomSvc.Alive() error(%v)", err)
+			log.Printf("[Error] drcomSvc.Alive() error(%v)", err)
 			time.Sleep(time.Second * 5)
 			continue
 		}
-		log.Printf("[GDJ][INFO] Keepalive #%d success", count)
+		log.Printf("[INFO] Keepalive #%d success", count)
 		time.Sleep(time.Second * 20)
 	}
 }
 
 func (s *Service) Logout() {
-	log.Println("[GDJ][Info] Logging out...")
+	log.Println("[Info] Logging out...")
 	if err := s.Challenge(); err != nil {
-		log.Printf("[GDJ][Error] drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
+		log.Printf("[Error] drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
 		return
 	}
 	if err := s.logout(); err != nil {
-		log.Printf("[GDJ][Error] service.logout() error(%v)", err)
+		log.Printf("[Error] service.logout() error(%v)", err)
 		return
 	}
-	log.Println("[GDJ][Info] Logged out")
+	log.Println("[Info] Logged out")
 }
 
 // Close close service.

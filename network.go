@@ -142,20 +142,20 @@ func watchNetStatus() {
 
 				if inf.IsWireless {
 					if ssid, err := getSSID(inf.Address); err != nil {
-						log.Println("[GDJ][ERROR] Failed to get SSID of connecting WiFi")
+						log.Println("[ERROR] Failed to get SSID of connecting WiFi")
 						continue
 					} else {
 						inf.SSID = ssid
 
 						if ssid != "JLU.PC" {
-							log.Println("[GDJ][DEBUG] Skipping non-JLU.PC WiFI")
+							log.Println("[DEBUG] Skipping non-JLU.PC WiFI")
 							continue
 						}
 					}
 				}
 
 				// TODO: 检查网络可用性
-				log.Printf("[GDJ][Info] Network connected, connecting...")
+				log.Printf("[Info] Network connected, connecting...")
 				time.Sleep(time.Second * 2)
 				client = drcom.New(cfg)
 				client.Start()
@@ -167,7 +167,7 @@ func watchNetStatus() {
 				inf := Interfaces[MAC]
 
 				_ = client.Close()
-				log.Printf("[GDJ][Info] Network disconnected.")
+				log.Printf("[Info] Network disconnected.")
 
 				activeMAC = ""
 				inf.Connected = false

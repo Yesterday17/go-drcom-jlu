@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
 	"log"
 	"os"
@@ -20,13 +19,15 @@ var (
 // -10 failed to parse config file
 
 func main() {
-	var cfgPath string
+	var cfgPath, logPath string
 	var err error
 
 	flag.StringVar(&cfgPath, "c", "./config.json", "配置文件的路径")
+	flag.StringVar(&logPath, "l", "./go-drcom-jlu.log", "日志文件的路径")
 	flag.Parse()
 
 	Interfaces = make(map[string]*Interface)
+	log.SetPrefix("[GDJ]")
 
 	if err = initWireless(); err != nil {
 		log.Fatal(err)
@@ -39,7 +40,7 @@ func main() {
 	// 加载配置文件
 	cfg, err = ReadConfig(cfgPath)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(-10)
 	}
 
@@ -47,7 +48,7 @@ func main() {
 	for _, inf := range Interfaces {
 		if inf.Address == cfg.MAC {
 			if inf.IsWireless {
-				fmt.Printf("[GDJ][WARN] Wireless MAC address detected")
+				log.Printf("[WARN] Wireless MAC address detected")
 			}
 			activeMAC = inf.Address
 			break
@@ -56,7 +57,7 @@ func main() {
 
 	// 未检测到对应配置文件的 MAC 地址
 	if activeMAC == "" {
-		log.Fatal("[GDJ][ERROR] No matching MAC address detected")
+		log.Fatal("[ERROR] No matching MAC address detected")
 	} else {
 		inf := Interfaces[activeMAC]
 		if !inf.Connected {
@@ -78,7 +79,7 @@ func main() {
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	for {
 		s := <-sig
-		log.Printf("[GDJ] Exiting with signal %s", s.String())
+		log.Printf("Exiting with signal %s", s.String())
 		if client != nil {
 			client.Logout()
 			_ = client.Close()
