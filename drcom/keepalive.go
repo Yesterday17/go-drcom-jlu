@@ -125,7 +125,7 @@ func (c *Client) keepalive() {
 				logger.Info("Keepalive exited")
 				return
 			}
-		case <-time.After(20 * time.Second):
+		default:
 			count++
 			logger.Infof("Sending keepalive #%d", count)
 			if err := c.Alive(); err != nil {
@@ -134,6 +134,7 @@ func (c *Client) keepalive() {
 				continue
 			}
 			logger.Infof("Keepalive #%d success", count)
+			time.Sleep(time.Second * 20)
 		}
 
 	}
