@@ -47,6 +47,14 @@ func main() {
 		}
 	} else {
 		// TODO: 写入日志到文件
+		switch logLevel {
+		case 0:
+			logger.Init(ioutil.Discard, ioutil.Discard, os.Stderr)
+		case 1:
+			logger.Init(ioutil.Discard, os.Stdout, os.Stderr)
+		case 2:
+			logger.Init(os.Stdout, os.Stdout, os.Stderr)
+		}
 	}
 
 	if err = initWireless(); err != nil {
