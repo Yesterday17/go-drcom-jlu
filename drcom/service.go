@@ -3,8 +3,8 @@ package drcom
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/Yesterday17/go-drcom-jlu/logger"
 	"hash"
-	"log"
 	"math/big"
 	"net"
 	"os"
@@ -83,41 +83,42 @@ func New(cfg *Config) (s *Service) {
 
 	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%s", authServer, authPort))
 	if err != nil {
-		log.Fatalf("net.ResolveUDPAddr(udp4, %s) error(%v) ", fmt.Sprintf("%s:%s", authServer, authPort), err)
+		logger.Errorf("net.ResolveUDPAddr(udp4, %s) error(%v) ", fmt.Sprintf("%s:%s", authServer, authPort), err)
+		os.Exit(1)
 	}
 
 	conn, err := net.DialTimeout("udp", udpAddr.String(), time.Second)
 	if err != nil {
-		log.Fatalf("net.DialUDP(udp, %v, %v) error(%v)", nil, udpAddr, err)
+		logger.Errorf("net.DialUDP(udp, %v, %v) error(%v)", nil, udpAddr, err)
+		os.Exit(1)
 	}
 
 	s.conn = conn.(*net.UDPConn)
 	return
 }
 
-// Start start drcom client
 func (s *Service) Start() {
-	log.Println("[INFO] Starting...")
+	logger.Info("Starting...")
 
 	// Challenge
-	log.Println("[INFO] Challenging...")
+	logger.Info("Challenging...")
 	if err := s.Challenge(); err != nil {
-		log.Printf("[ERROR] Error #%d: %v", s.ChallengeTimes, err)
+		logger.Errorf("Error #%d: %v", s.ChallengeTimes, err)
 		return
 	}
-	log.Println("[INFO] Successfully challenged")
+	logger.Info("Successfully challenged")
 
 	// Login
-	log.Println("[INFO] Logining...")
+	logger.Info("Logining...")
 	if err := s.Login(); err != nil {
-		log.Printf("[ERROR] Login error: %v", err)
+		logger.Errorf("Login error: %v", err)
 		return
 	}
-	log.Println("[INFO] Successfully logged in")
+	logger.Info("Successfully logged in")
 
-	log.Println("[INFO] Starting keepalive daemon...")
+	logger.Info("Starting keepalive daemon...")
 	go s.aliveproc()
-	log.Println("[INFO] Successfully started keepalive")
+	logger.Info("Successfully started keepalive")
 }
 
 func (s *Service) aliveproc() {
@@ -126,34 +127,34 @@ func (s *Service) aliveproc() {
 		select {
 		case _, ok := <-s.logoutCh:
 			if !ok {
-				log.Println("[INFO] Keepalive exited")
+				logger.Info("Keepalive exited")
 				return
 			}
 		default:
 		}
 		count++
-		log.Printf("[INFO] Sending keepalive #%d", count)
+		logger.Infof("Sending keepalive #%d", count)
 		if err := s.Alive(); err != nil {
-			log.Printf("[Error] drcomSvc.Alive() error(%v)", err)
+			logger.Errorf("drcomSvc.Alive() error(%v)", err)
 			time.Sleep(time.Second * 5)
 			continue
 		}
-		log.Printf("[INFO] Keepalive #%d success", count)
+		logger.Infof("Keepalive #%d success", count)
 		time.Sleep(time.Second * 20)
 	}
 }
 
 func (s *Service) Logout() {
-	log.Println("[Info] Logging out...")
+	logger.Info("Logging out...")
 	if err := s.Challenge(); err != nil {
-		log.Printf("[Error] drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
+		logger.Errorf("drcomSvc.Challenge(%d) error(%v)", s.ChallengeTimes, err)
 		return
 	}
 	if err := s.logout(); err != nil {
-		log.Printf("[Error] service.logout() error(%v)", err)
+		logger.Errorf("service.logout() error(%v)", err)
 		return
 	}
-	log.Println("[Info] Logged out")
+	logger.Info("Logged out")
 }
 
 // Close close service.

@@ -12,7 +12,6 @@ const (
 )
 
 var (
-	// ErrMACAddrLenError mac-len-err
 	ErrMACAddrLenError = errors.New("length of mac address is not correct")
 )
 

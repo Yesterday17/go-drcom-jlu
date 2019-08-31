@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
+	"github.com/Yesterday17/go-drcom-jlu/logger"
 	"github.com/mdlayher/wifi"
 	"github.com/vishvananda/netlink"
 	"log"
@@ -142,20 +143,20 @@ func watchNetStatus() {
 
 				if inf.IsWireless {
 					if ssid, err := getSSID(inf.Address); err != nil {
-						log.Println("[ERROR] Failed to get SSID of connecting WiFi")
+						logger.Error("Failed to get SSID of connecting WiFi")
 						continue
 					} else {
 						inf.SSID = ssid
 
 						if ssid != "JLU.PC" {
-							log.Println("[DEBUG] Skipping non-JLU.PC WiFI")
+							logger.Info("Skipping non-JLU.PC WiFI")
 							continue
 						}
 					}
 				}
 
 				// TODO: 检查网络可用性
-				log.Printf("[Info] Network connected, connecting...")
+				logger.Info("Network connected, connecting...")
 				time.Sleep(time.Second * 2)
 				client = drcom.New(cfg)
 				client.Start()
@@ -167,7 +168,7 @@ func watchNetStatus() {
 				inf := Interfaces[MAC]
 
 				_ = client.Close()
-				log.Printf("[Info] Network disconnected.")
+				logger.Info("Network disconnected")
 
 				activeMAC = ""
 				inf.Connected = false

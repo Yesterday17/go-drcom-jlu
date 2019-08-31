@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
+	"github.com/Yesterday17/go-drcom-jlu/logger"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -20,14 +22,32 @@ var (
 
 func main() {
 	var cfgPath, logPath string
+	var logLevel int
 	var err error
 
 	flag.StringVar(&cfgPath, "c", "./config.json", "配置文件的路径")
-	flag.StringVar(&logPath, "l", "", "日志文件的路径, 留空则输出到 stdout")
+	flag.StringVar(&logPath, "log", "", "日志文件的路径, 留空则输出到 stdout")
+	flag.IntVar(&logLevel, "level", 1, "日志级别, 0 最简略, 2 最详细")
 	flag.Parse()
 
 	Interfaces = make(map[string]*Interface)
-	log.SetPrefix("[GDJ]")
+
+	if logLevel > 2 || logLevel < 0 {
+		log.Fatalln("日志等级必须在 0-2 之间")
+	}
+
+	if logPath == "" {
+		switch logLevel {
+		case 0:
+			logger.Init(ioutil.Discard, ioutil.Discard, os.Stderr)
+		case 1:
+			logger.Init(ioutil.Discard, os.Stdout, os.Stderr)
+		case 2:
+			logger.Init(os.Stdout, os.Stdout, os.Stderr)
+		}
+	} else {
+		// TODO: 写入日志到文件
+	}
 
 	if err = initWireless(); err != nil {
 		log.Fatal(err)
@@ -48,7 +68,7 @@ func main() {
 	for _, inf := range Interfaces {
 		if inf.Address == cfg.MAC {
 			if inf.IsWireless {
-				log.Printf("[WARN] Wireless MAC address detected")
+				logger.Warn("Wireless MAC address detected")
 			}
 			activeMAC = inf.Address
 			break
@@ -57,7 +77,8 @@ func main() {
 
 	// 未检测到对应配置文件的 MAC 地址
 	if activeMAC == "" {
-		log.Fatal("[ERROR] No matching MAC address detected")
+		logger.Error("No matching MAC address detected")
+		os.Exit(1)
 	} else {
 		inf := Interfaces[activeMAC]
 		if !inf.Connected {

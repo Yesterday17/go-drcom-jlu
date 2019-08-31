@@ -4,22 +4,17 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
+	"github.com/Yesterday17/go-drcom-jlu/logger"
 	"math/rand"
 )
 
 var (
-	// ErrChallengeHeadError head-error
 	ErrChallengeHeadError = errors.New("challenge receive head is not correct")
-	// ErrMACAddrError mac-error
-	ErrMACAddrError = errors.New("invalid mac address")
-	// ErrIdentifyError identify-error
-	ErrIdentifyError = errors.New("invalid username or password")
-	// ErrUnknown unknown-error
-	ErrUnknown = errors.New("login failed: unknown error")
+	ErrMACAddrError       = errors.New("invalid mac address")
+	ErrIdentifyError      = errors.New("invalid username or password")
+	ErrUnknown            = errors.New("login failed: unknown error")
 )
 
-// Challenge challenge
 func (s *Service) Challenge() error {
 	var (
 		response []byte
@@ -54,7 +49,6 @@ func (s *Service) Challenge() error {
 	return ErrChallengeHeadError
 }
 
-// Login login
 func (s *Service) Login() (err error) {
 	var (
 		r    []byte
@@ -62,16 +56,16 @@ func (s *Service) Login() (err error) {
 		conn = s.conn
 	)
 	if buf, err = s.bufIn(); err != nil {
-		log.Printf("service.bufIn() error(%v)", err)
+		logger.Errorf("service.bufIn() error(%v)", err)
 		return
 	}
 	if _, err = conn.Write(buf); err != nil {
-		log.Printf("conn.Write(%v) error(%v)", buf, err)
+		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	r = make([]byte, 128)
 	if _, err = conn.Read(r); err != nil {
-		log.Printf("conn.Read() error(%v)", err)
+		logger.Errorf("conn.Read() error(%v)", err)
 		return
 	}
 	if r[0] != 0x04 {
@@ -110,7 +104,7 @@ func (s *Service) bufIn() (buf []byte, err error) {
 	buf = append(buf, _controlCheck, _adapterNum) //[56:58]
 	// md5a xor mac
 	if mac, err = MACHex2Bytes(s.config.MAC); err != nil {
-		log.Printf("MACHex2Bytes(%s) error(%v)", s.config.MAC, err)
+		logger.Errorf("MACHex2Bytes(%s) error(%v)", s.config.MAC, err)
 		return
 	}
 	for i := 0; i < 6; i++ {
@@ -187,7 +181,6 @@ func (s *Service) bufIn() (buf []byte, err error) {
 	return
 }
 
-// Alive keepalive
 func (s *Service) Alive() (err error) {
 	var (
 		r, buf []byte
@@ -195,12 +188,12 @@ func (s *Service) Alive() (err error) {
 	)
 	buf = s.buf38()
 	if _, err = conn.Write(buf); err != nil {
-		log.Printf("conn.Write(%v) error(%v)", buf, err)
+		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	r = make([]byte, 128)
 	if _, err = conn.Read(r); err != nil {
-		log.Printf("conn.Read() error(%v)", err)
+		logger.Errorf("conn.Read() error(%v)", err)
 		return
 	}
 	s.keepAliveVer[0] = r[28]
@@ -208,12 +201,12 @@ func (s *Service) Alive() (err error) {
 	if s.extra() {
 		buf = s.buf40(true, true)
 		if _, err = conn.Write(buf); err != nil {
-			log.Printf("conn.Write(%v) error(%v)", buf, err)
+			logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 			return
 		}
 		r = make([]byte, 512)
 		if _, err = conn.Read(r); err != nil {
-			log.Printf("conn.Read() error(%v)", err)
+			logger.Errorf("conn.Read() error(%v)", err)
 			return
 		}
 		s.Count++
@@ -221,12 +214,12 @@ func (s *Service) Alive() (err error) {
 	// 40_1
 	buf = s.buf40(true, false)
 	if _, err = conn.Write(buf); err != nil {
-		log.Printf("conn.Write(%v) error(%v)", buf, err)
+		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	r = make([]byte, 64)
 	if _, err = conn.Read(r); err != nil {
-		log.Printf("conn.Read() error(%v)", err)
+		logger.Errorf("conn.Read() error(%v)", err)
 		return
 	}
 	s.Count++
@@ -234,11 +227,11 @@ func (s *Service) Alive() (err error) {
 	// 40_2
 	buf = s.buf40(false, false)
 	if _, err = conn.Write(buf); err != nil {
-		log.Printf("conn.Write(%v) error(%v)", buf, err)
+		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	if _, err = conn.Read(r); err != nil {
-		log.Printf("conn.Read() error(%v)", err)
+		logger.Errorf("conn.Read() error(%v)", err)
 	}
 	s.Count++
 	return
@@ -302,16 +295,16 @@ func (s *Service) logout() (err error) {
 		conn   = s.conn
 	)
 	if buf, err = s.bufOut(); err != nil {
-		log.Printf("service.bufOut() error(%v)", err)
+		logger.Errorf("service.bufOut() error(%v)", err)
 		return
 	}
 	if _, err = conn.Write(buf); err != nil {
-		log.Printf("conn.Write(%v) error(%v)", buf, err)
+		logger.Errorf("conn.Write(%v) error(%v)", buf, err)
 		return
 	}
 	r = make([]byte, 512)
 	if _, err = conn.Read(r); err != nil {
-		log.Printf("conn.Read() error(%v)", err)
+		logger.Errorf("conn.Read() error(%v)", err)
 		return
 	}
 	if r[0] != 0x04 {
@@ -335,7 +328,7 @@ func (s *Service) bufOut() (buf []byte, err error) {
 	buf = append(buf, _controlCheck, _adapterNum)
 	// md5 xor mac
 	if mac, err = MACHex2Bytes(s.config.MAC); err != nil {
-		log.Printf("MACHex2Bytes(%s) error(%v)", s.config.MAC, err)
+		logger.Errorf("MACHex2Bytes(%s) error(%v)", s.config.MAC, err)
 		buf = nil
 		return
 	}
