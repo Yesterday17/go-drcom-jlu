@@ -81,6 +81,16 @@ func main() {
 		os.Exit(1)
 	} else {
 		inf := Interfaces[activeMAC]
+
+		if !inf.Connected {
+			for _, inf2 := range Interfaces {
+				if inf2.IsWireless && inf2.Connected {
+					inf = inf2
+					activeMAC = inf2.Address
+				}
+			}
+		}
+
 		if !inf.Connected {
 			activeMAC = ""
 		} else if inf.IsWireless && inf.SSID != "JLU.PC" {
