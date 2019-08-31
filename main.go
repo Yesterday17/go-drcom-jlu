@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"github.com/Yesterday17/go-drcom-jlu/config"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
 	"log"
 	"os"
@@ -13,26 +13,31 @@ import (
 var (
 	activeMAC = ""
 	client    *drcom.Service
-	cfg       *config.Config
+	cfg       *drcom.Config
 )
 
 // return code list
 // -10 failed to parse config file
 
 func main() {
+	var cfgPath string
+	var err error
+
+	flag.StringVar(&cfgPath, "c", "./config.json", "配置文件的路径")
+	flag.Parse()
+
 	Interfaces = make(map[string]*Interface)
 
-	if err := initWireless(); err != nil {
+	if err = initWireless(); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := initWired(); err != nil {
+	if err = initWired(); err != nil {
 		log.Fatal(err)
 	}
 
 	// 加载配置文件
-	conf, err := config.ReadConfig("./config.json")
-	// conf, err := config.ReadConfig("/etc/go-drcom-jlu/config.json")
+	cfg, err = ReadConfig(cfgPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-10)
@@ -40,9 +45,9 @@ func main() {
 
 	// 检查配置文件的 MAC 地址是否与 WiFi / 有线网卡 的 MAC 匹配
 	for _, inf := range Interfaces {
-		if inf.Address == conf.MAC {
+		if inf.Address == cfg.MAC {
 			if inf.IsWireless {
-				fmt.Printf("[GDJ][WARN] Wireless MAC address detected, make sure you know what you're doing!")
+				fmt.Printf("[GDJ][WARN] Wireless MAC address detected")
 			}
 			activeMAC = inf.Address
 			break
@@ -60,9 +65,6 @@ func main() {
 			activeMAC = ""
 		}
 	}
-
-	// 全局化
-	cfg = &conf
 
 	go watchNetStatus()
 

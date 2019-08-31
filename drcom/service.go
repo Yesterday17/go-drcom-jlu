@@ -9,8 +9,6 @@ import (
 	"net"
 	"os"
 	"time"
-
-	"github.com/Yesterday17/go-drcom-jlu/config"
 )
 
 const (
@@ -46,9 +44,14 @@ var (
 	})()
 )
 
-// Service jlu-service
+type Config struct {
+	MAC      string `json:"mac"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Service struct {
-	config         *config.Config
+	config         *Config
 	md5Ctx         hash.Hash
 	salt           []byte // [4:8]
 	clientIP       []byte // [20:24]
@@ -63,7 +66,7 @@ type Service struct {
 }
 
 // New create service instance and return.
-func New(cfg *config.Config) (s *Service) {
+func New(cfg *Config) (s *Service) {
 	s = &Service{
 		config:         cfg,
 		md5Ctx:         md5.New(),
