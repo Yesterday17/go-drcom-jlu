@@ -166,7 +166,10 @@ func watchNetStatus() {
 
 				activeMAC = MAC
 				inf.Connected = true
-			} else if update.Flags < 65536 && activeMAC != "" {
+			} else if update.Flags < 65536 &&
+				activeMAC != "" &&
+				update.Attrs().Name != "" &&
+				update.Attrs().HardwareAddr.String() == activeMAC {
 				MAC := update.Attrs().HardwareAddr.String()
 				inf := Interfaces[MAC]
 				if inf == nil {
