@@ -120,7 +120,7 @@ func main() {
 		s := <-sig
 		log.Printf("Exiting with signal %s", s.String())
 		if activeMAC != "" && client != nil {
-			client.Logout()
+			// client.Logout()
 			_ = client.Close()
 		}
 		return
