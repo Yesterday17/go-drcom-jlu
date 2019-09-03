@@ -50,6 +50,8 @@ type Config struct {
 	Password string        `json:"password"`
 	Retry    int           `json:"retry"`
 	Timeout  time.Duration `json:"timeout"`
+	LogLevel int           `json:"log_level"`
+	LogPath  string        `json:"log_path"`
 }
 
 type Client struct {

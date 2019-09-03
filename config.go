@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
+	"github.com/Yesterday17/go-drcom-jlu/logger"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -42,6 +43,32 @@ func ReadConfig(path string) (*drcom.Config, error) {
 	// Default Retry = 3 times
 	if config.Retry <= 0 {
 		config.Retry = 3
+	}
+
+	// Default LogLevel = 1
+	if config.LogLevel < 0 || config.LogLevel > 2 {
+		config.LogLevel = 1
+	}
+
+	if config.LogPath == "" {
+		switch config.LogLevel {
+		case 0:
+			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
+		case 1:
+			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+		case 2:
+			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+		}
+	} else {
+		// TODO: 写入日志到文件
+		switch config.LogLevel {
+		case 0:
+			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
+		case 1:
+			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+		case 2:
+			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+		}
 	}
 
 	// Write change to config file

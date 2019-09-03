@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
 	"github.com/Yesterday17/go-drcom-jlu/logger"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -21,41 +20,13 @@ var (
 // 10 failed to parse config file
 
 func main() {
-	var cfgPath, logPath string
-	var logLevel int
+	var cfgPath string
 	var err error
 
 	flag.StringVar(&cfgPath, "config", "./config.json", "配置文件的路径")
-	flag.StringVar(&logPath, "log", "", "日志文件的路径, 留空则输出到 stdout (暂未支持)")
-	flag.IntVar(&logLevel, "level", 1, "日志级别, 0 最简略, 2 最详细")
 	flag.Parse()
 
 	Interfaces = make(map[string]*Interface)
-
-	if logLevel > 2 || logLevel < 0 {
-		log.Fatalln("日志等级必须在 0-2 之间")
-	}
-
-	if logPath == "" {
-		switch logLevel {
-		case 0:
-			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
-		case 1:
-			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-		case 2:
-			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
-		}
-	} else {
-		// TODO: 写入日志到文件
-		switch logLevel {
-		case 0:
-			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
-		case 1:
-			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-		case 2:
-			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
-		}
-	}
 
 	if err = initWireless(); err != nil {
 		log.Fatal(err)
