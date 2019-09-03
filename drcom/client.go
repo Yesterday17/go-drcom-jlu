@@ -22,7 +22,6 @@ const (
 )
 
 const (
-	//authServer = "auth.jlu.edu.cn"
 	authIP   = "10.100.61.3"
 	authPort = "61440"
 )
@@ -46,9 +45,11 @@ var (
 )
 
 type Config struct {
-	MAC      string `json:"mac"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	MAC      string        `json:"mac"`
+	Username string        `json:"username"`
+	Password string        `json:"password"`
+	Retry    int           `json:"retry"`
+	Timeout  time.Duration `json:"timeout"`
 }
 
 type Client struct {
@@ -88,8 +89,6 @@ func New(cfg *Config) *Client {
 		salt:           make([]byte, 4),
 		ChallengeTimes: 0,
 		Count:          0,
-		timeout:        3,
-		retry:          3,
 		logoutCh:       make(chan struct{}, 1),
 	}
 }
@@ -99,7 +98,7 @@ func (c *Client) Start() {
 
 	// Challenge
 	logger.Info("Challenging...")
-	for i := 0; i < c.retry; i++ {
+	for i := 0; i < c.config.Retry; i++ {
 		if err := c.Challenge(); err != nil {
 			logger.Errorf("Challenge Error #%d: %v", c.ChallengeTimes, err)
 			if i == c.retry-1 {
@@ -131,7 +130,7 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) WriteWithTimeout(b []byte) (err error) {
-	if err = c.conn.SetWriteDeadline(time.Now().Add(time.Second * 3)); err != nil {
+	if err = c.conn.SetWriteDeadline(time.Now().Add(time.Second * c.config.Timeout)); err != nil {
 		return
 	}
 	_, err = c.conn.Write(b)
@@ -139,7 +138,7 @@ func (c *Client) WriteWithTimeout(b []byte) (err error) {
 }
 
 func (c *Client) ReadWithTimeout(b []byte) (err error) {
-	if err = c.conn.SetReadDeadline(time.Now().Add(time.Second * c.timeout)); err != nil {
+	if err = c.conn.SetReadDeadline(time.Now().Add(time.Second * c.config.Timeout)); err != nil {
 		return
 	}
 	_, err = c.conn.Read(b)

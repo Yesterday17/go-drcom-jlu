@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Yesterday17/go-drcom-jlu/drcom"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -30,6 +31,24 @@ func ReadConfig(path string) (*drcom.Config, error) {
 		return nil, fmt.Errorf("password cannot be empty")
 	}
 
+	// convert MAC to lower case
 	config.MAC = strings.ToLower(config.MAC)
+
+	// Default Timeout = 3 seconds
+	if config.Timeout <= 0 {
+		config.Timeout = 3
+	}
+
+	// Default Retry = 3 times
+	if config.Retry <= 0 {
+		config.Retry = 3
+	}
+
+	// Write change to config file
+	jsonConfig, _ := json.Marshal(config)
+	if err := ioutil.WriteFile(path, jsonConfig, os.FileMode(0644)); err != nil {
+		return nil, err
+	}
+
 	return &config, nil
 }
