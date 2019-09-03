@@ -73,44 +73,39 @@ func main() {
 	}
 
 	// 检查配置文件的 MAC 地址是否与 WiFi / 有线网卡 的 MAC 匹配
+	var MAC string
 	for _, inf := range Interfaces {
 		if inf.Address == cfg.MAC {
 			if inf.IsWireless {
 				logger.Warn("Wireless MAC address detected")
 			}
-			activeMAC = inf.Address
+			MAC = inf.Address
 			break
 		}
 	}
 
 	// 未检测到对应配置文件的 MAC 地址
-	if activeMAC == "" {
+	if MAC == "" {
 		logger.Error("No matching MAC address detected")
 		os.Exit(10)
 	} else {
-		inf := Interfaces[activeMAC]
+		inf := Interfaces[MAC]
 
+		// 当 MAC 对应的接口未连接时 搜索无线网卡
 		if !inf.Connected {
 			for _, inf2 := range Interfaces {
-				if inf2.IsWireless && inf2.Connected {
-					inf = inf2
-					activeMAC = inf2.Address
+				if inf2.IsWireless && inf2.IsSchoolNet() {
+					MAC = inf2.Address
+					break
 				}
 			}
-		}
-
-		if !inf.Connected {
-			activeMAC = ""
-		} else if inf.IsWireless && inf.SSID != "JLU.PC" {
-			activeMAC = ""
 		}
 	}
 
 	go watchNetStatus()
 
-	if activeMAC != "" {
-		client = drcom.New(cfg)
-		client.Start()
+	if MAC != "" {
+		NewClient(MAC)
 	}
 
 	// 处理退出信号

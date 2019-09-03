@@ -7,18 +7,31 @@ import (
 	"github.com/mdlayher/wifi"
 	"github.com/vishvananda/netlink"
 	"log"
-	"time"
 )
 
 type Interface struct {
-	Name      string
-	Address   string
-	Connected bool
-
-	IsSchoolNet bool
-
+	// 初始化后不应改变的值
+	Name       string
+	Address    string
 	IsWireless bool
-	SSID       string
+
+	// 随接口状态变化的值
+	Connected   bool
+	SSID        string
+	CanPingUIMS bool
+}
+
+func (i *Interface) IsSchoolNet() bool {
+	if !i.Connected {
+		return false
+	}
+
+	if i.IsWireless {
+		return i.SSID == "JLU.PC"
+	} else {
+		return true
+		// return i.CanPingUIMS
+	}
 }
 
 // MAC -> Interface 的 Map
@@ -134,16 +147,18 @@ func watchNetStatus() {
 		select {
 		case update := <-ch:
 			if update.Attrs().MTU > 0 &&
+				update.Attrs().Name != "" &&
 				update.Attrs().OperState.String() == "up" &&
-				update.Flags >= 65536 &&
-				activeMAC == "" {
-
+				update.Flags >= 65536 {
+				// 更新接口状态
 				MAC := update.Attrs().HardwareAddr.String()
-
 				inf := Interfaces[MAC]
 				if inf == nil {
 					continue
 				}
+
+				// 标记接口为已连接
+				inf.Connected = true
 
 				if inf.IsWireless {
 					if ssid, err := getSSID(inf.Address); err != nil {
@@ -159,30 +174,46 @@ func watchNetStatus() {
 				}
 
 				// TODO: 检查网络可用性
-				logger.Info("Network connected, connecting...")
-				time.Sleep(time.Second * 2)
-				client = drcom.New(cfg)
-				client.Start()
-
-				activeMAC = MAC
-				inf.Connected = true
+				if activeMAC == "" {
+					logger.Infof("%v", update)
+					logger.Info("Network connected, connecting...")
+					NewClient(MAC)
+				}
 			} else if update.Flags < 65536 &&
-				activeMAC != "" &&
-				update.Attrs().Name != "" &&
-				update.Attrs().HardwareAddr.String() == activeMAC {
+				update.Attrs().Name != "" {
+				// 更新接口状态
 				MAC := update.Attrs().HardwareAddr.String()
 				inf := Interfaces[MAC]
 				if inf == nil {
 					continue
 				}
-
-				_ = client.Close()
-				logger.Info("Network disconnected")
-
-				activeMAC = ""
 				inf.Connected = false
-				inf.SSID = ""
+
+				if activeMAC != "" &&
+					update.Attrs().HardwareAddr.String() == activeMAC {
+					_ = client.Close()
+					activeMAC = ""
+					inf.SSID = ""
+					logger.Info("Network disconnected")
+
+					// 寻找其他已接入网络
+					for _, inf := range Interfaces {
+						if inf.IsSchoolNet() {
+							NewClient(inf.Address)
+							break
+						}
+					}
+				}
 			}
 		}
 	}
+}
+
+func NewClient(MAC string) {
+	inf := Interfaces[MAC]
+	logger.Infof("Connecting with interface %s - %s", inf.Name, inf.Address)
+
+	activeMAC = MAC
+	client = drcom.New(cfg)
+	client.Start()
 }
