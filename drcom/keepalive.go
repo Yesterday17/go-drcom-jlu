@@ -122,18 +122,18 @@ func (c *Client) keepalive() {
 		select {
 		case _, ok := <-c.logoutCh:
 			if !ok {
-				logger.Info("Keepalive exited")
+				logger.Debug("☑ Exited keepalive daemon")
 				return
 			}
 		default:
 			count++
-			logger.Debugf("Sending keepalive #%d", count)
+			logger.Debugf("- Sending keepalive #%d", count)
 			if err := c.Alive(); err != nil {
 				logger.Errorf("drcom.keepalive.Alive() error(%v)", err)
 				time.Sleep(time.Second * 5)
 				continue
 			}
-			logger.Debugf("Keepalive #%d success", count)
+			logger.Debugf("- Keepalive #%d success", count)
 			time.Sleep(time.Second * 20)
 		}
 

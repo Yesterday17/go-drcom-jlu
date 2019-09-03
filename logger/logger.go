@@ -28,7 +28,7 @@ func Init(dw, iw, ww, ew io.Writer) {
 	debugLogger = log.New(dw, "[GDJ][DEBUG] ", log.LstdFlags)
 	infoLogger = log.New(iw, "[GDJ][INFO] ", log.LstdFlags)
 	warnLogger = log.New(ww, "[GDJ][WARN] ", log.LstdFlags)
-	errorLogger = log.New(ew, "[GDJ][ERROR] ", log.LstdFlags)
+	errorLogger = log.New(ew, "[GDJ][ERROR] ☒ ", log.LstdFlags)
 }
 
 func Debug(info string) {

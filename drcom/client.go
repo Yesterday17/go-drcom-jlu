@@ -70,10 +70,11 @@ type Client struct {
 }
 
 func New(cfg *Config) *Client {
+	time.Sleep(2 * time.Second)
 	addr := fmt.Sprintf("%s:%s", authIP, authPort)
-	conn, err := net.DialTimeout("udp", addr, time.Second)
+	conn, err := net.DialTimeout("udp", addr, cfg.Timeout*time.Second)
 	if err != nil {
-		logger.Errorf("net.DialTimeout('udp', %v, time.Second) error(%v)", addr, err)
+		logger.Errorf("[New-Client] DialTimeout error: %v", err)
 		os.Exit(1)
 	}
 
@@ -94,32 +95,29 @@ func New(cfg *Config) *Client {
 }
 
 func (c *Client) Start() {
-	logger.Info("Starting...")
+	logger.Info("- Starting...")
 
 	// Challenge
-	logger.Info("Challenging...")
 	for i := 0; i < c.config.Retry; i++ {
 		if err := c.Challenge(); err != nil {
-			logger.Errorf("Challenge Error #%d: %v", c.ChallengeTimes, err)
+			logger.Errorf("Challenge #%d error: %v", c.ChallengeTimes, err)
 			if i == c.retry-1 {
-				logger.Error("Retried for 3 times! Exiting...")
+				logger.Error("Failed to challenge for 3 times! Exiting...")
 				os.Exit(1)
 			}
 		}
 	}
-	logger.Info("Successfully challenged")
+	logger.Info("☑ Challenge")
 
 	// Login
-	logger.Info("Login...")
 	if err := c.Login(); err != nil {
 		logger.Errorf("Login error: %v", err)
 		os.Exit(1)
 	}
-	logger.Info("Successfully logged in")
+	logger.Info("☑ Login")
 
-	logger.Info("Starting keepalive daemon...")
 	go c.keepalive()
-	logger.Info("Successfully started keepalive")
+	logger.Info("☑ Keepalive")
 }
 
 // Close close service.

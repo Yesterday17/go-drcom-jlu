@@ -174,8 +174,8 @@ func watchNetStatus() {
 
 				// TODO: 检查网络可用性
 				if activeMAC == "" {
-					logger.Infof("%v", update)
-					logger.Info("Network connected, connecting...")
+					logger.Debugf("%v", update)
+					logger.Debug("Network connected, connecting...")
 					NewClient(MAC)
 				}
 			} else if update.Flags < 65536 &&
@@ -193,7 +193,7 @@ func watchNetStatus() {
 					_ = client.Close()
 					activeMAC = ""
 					inf.SSID = ""
-					logger.Info("Network disconnected")
+					logger.Info("- Network disconnected")
 
 					// 寻找其他已接入网络
 					for _, inf := range Interfaces {
@@ -210,7 +210,7 @@ func watchNetStatus() {
 
 func NewClient(MAC string) {
 	inf := Interfaces[MAC]
-	logger.Infof("Connecting with interface %s - %s", inf.Name, inf.Address)
+	logger.Infof("- Connecting with interface %s - %s", inf.Name, inf.Address)
 
 	activeMAC = MAC
 	client = drcom.New(cfg)

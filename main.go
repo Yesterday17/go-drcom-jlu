@@ -26,7 +26,7 @@ func main() {
 	var err error
 
 	flag.StringVar(&cfgPath, "config", "./config.json", "配置文件的路径")
-	flag.StringVar(&logPath, "log", "", "日志文件的路径, 留空则输出到 stdout")
+	flag.StringVar(&logPath, "log", "", "日志文件的路径, 留空则输出到 stdout (暂未支持)")
 	flag.IntVar(&logLevel, "level", 1, "日志级别, 0 最简略, 2 最详细")
 	flag.Parse()
 
