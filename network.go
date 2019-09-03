@@ -148,7 +148,6 @@ func watchNetStatus() {
 		case update := <-ch:
 			if update.Attrs().MTU > 0 &&
 				update.Attrs().Name != "" &&
-				update.Attrs().OperState.String() == "up" &&
 				update.Flags >= 65536 {
 				// 更新接口状态
 				MAC := update.Attrs().HardwareAddr.String()

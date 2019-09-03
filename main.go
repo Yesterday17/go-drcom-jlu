@@ -90,6 +90,9 @@ func main() {
 		os.Exit(10)
 	} else {
 		inf := Interfaces[MAC]
+		if !inf.IsSchoolNet() {
+			MAC = ""
+		}
 
 		// 当 MAC 对应的接口未连接时 搜索无线网卡
 		if !inf.Connected {
