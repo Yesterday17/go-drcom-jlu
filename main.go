@@ -39,21 +39,21 @@ func main() {
 	if logPath == "" {
 		switch logLevel {
 		case 0:
-			logger.Init(ioutil.Discard, ioutil.Discard, os.Stderr)
+			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
 		case 1:
-			logger.Init(ioutil.Discard, os.Stdout, os.Stderr)
+			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 		case 2:
-			logger.Init(os.Stdout, os.Stdout, os.Stderr)
+			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 		}
 	} else {
 		// TODO: 写入日志到文件
 		switch logLevel {
 		case 0:
-			logger.Init(ioutil.Discard, ioutil.Discard, os.Stderr)
+			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
 		case 1:
-			logger.Init(ioutil.Discard, os.Stdout, os.Stderr)
+			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 		case 2:
-			logger.Init(os.Stdout, os.Stdout, os.Stderr)
+			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 		}
 	}
 

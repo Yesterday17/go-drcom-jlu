@@ -127,13 +127,13 @@ func (c *Client) keepalive() {
 			}
 		default:
 			count++
-			logger.Infof("Sending keepalive #%d", count)
+			logger.Debugf("Sending keepalive #%d", count)
 			if err := c.Alive(); err != nil {
 				logger.Errorf("drcom.keepalive.Alive() error(%v)", err)
 				time.Sleep(time.Second * 5)
 				continue
 			}
-			logger.Infof("Keepalive #%d success", count)
+			logger.Debugf("Keepalive #%d success", count)
 			time.Sleep(time.Second * 20)
 		}
 

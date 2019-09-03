@@ -63,6 +63,8 @@ type Client struct {
 	conn           *net.UDPConn
 	ChallengeTimes int
 	Count          int
+	timeout        time.Duration
+	retry          int
 	logoutCh       chan struct{}
 }
 
@@ -86,6 +88,8 @@ func New(cfg *Config) *Client {
 		salt:           make([]byte, 4),
 		ChallengeTimes: 0,
 		Count:          0,
+		timeout:        3,
+		retry:          3,
 		logoutCh:       make(chan struct{}, 1),
 	}
 }
@@ -95,9 +99,14 @@ func (c *Client) Start() {
 
 	// Challenge
 	logger.Info("Challenging...")
-	if err := c.Challenge(); err != nil {
-		logger.Errorf("Error #%d: %v", c.ChallengeTimes, err)
-		return
+	for i := 0; i < c.retry; i++ {
+		if err := c.Challenge(); err != nil {
+			logger.Errorf("Challenge Error #%d: %v", c.ChallengeTimes, err)
+			if i == c.retry-1 {
+				logger.Error("Retried for 3 times! Exiting...")
+				os.Exit(1)
+			}
+		}
 	}
 	logger.Info("Successfully challenged")
 
@@ -105,7 +114,7 @@ func (c *Client) Start() {
 	logger.Info("Login...")
 	if err := c.Login(); err != nil {
 		logger.Errorf("Login error: %v", err)
-		return
+		os.Exit(1)
 	}
 	logger.Info("Successfully logged in")
 
@@ -130,7 +139,7 @@ func (c *Client) WriteWithTimeout(b []byte) (err error) {
 }
 
 func (c *Client) ReadWithTimeout(b []byte) (err error) {
-	if err = c.conn.SetReadDeadline(time.Now().Add(time.Second * 3)); err != nil {
+	if err = c.conn.SetReadDeadline(time.Now().Add(time.Second * c.timeout)); err != nil {
 		return
 	}
 	_, err = c.conn.Read(b)
