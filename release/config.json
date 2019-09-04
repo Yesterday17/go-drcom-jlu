@@ -1,5 +1,9 @@
 {
   "mac": "MAC",
   "username": "username",
-  "password": "password"
+  "password": "password",
+  "retry": 3,
+  "timeout": 3,
+  "log_level": "info",
+  "log_path": ""
 }

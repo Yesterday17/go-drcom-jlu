@@ -45,28 +45,28 @@ func ReadConfig(path string) (*drcom.Config, error) {
 		config.Retry = 3
 	}
 
-	// Default LogLevel = 1
-	if config.LogLevel < 0 || config.LogLevel > 2 {
-		config.LogLevel = 1
+	// Default LogLevel = "info"
+	if config.LogLevel == "" || (config.LogLevel != "error" && config.LogLevel != "info" && config.LogLevel != "debug") {
+		config.LogLevel = "info"
 	}
 
 	if config.LogPath == "" {
 		switch config.LogLevel {
-		case 0:
+		case "error":
 			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
-		case 1:
+		case "info":
 			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-		case 2:
+		case "debug":
 			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 		}
 	} else {
 		// TODO: 写入日志到文件
 		switch config.LogLevel {
-		case 0:
+		case "error":
 			logger.Init(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
-		case 1:
+		case "info":
 			logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-		case 2:
+		case "debug":
 			logger.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 		}
 	}
