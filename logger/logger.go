@@ -52,32 +52,32 @@ func Init(dw, iw, ww, ew io.Writer) {
 	errorLogger = NewLogger(ew, "ERROR", "☒", log.Lshortfile)
 }
 
-func Debug(info string) {
-	debugLogger.Println(info)
+func Debug(v ...interface{}) {
+	debugLogger.Println(v...)
 }
 
 func Debugf(format string, v ...interface{}) {
 	debugLogger.Printf(format, v...)
 }
 
-func Info(info string) {
-	infoLogger.Println(info)
+func Info(v ...interface{}) {
+	infoLogger.Println(v...)
 }
 
 func Infof(format string, v ...interface{}) {
 	infoLogger.Printf(format, v...)
 }
 
-func Warn(warn string) {
-	warnLogger.Println(warn)
+func Warn(v ...interface{}) {
+	warnLogger.Println(v...)
 }
 
 func Warnf(format string, v ...interface{}) {
 	warnLogger.Printf(format, v...)
 }
 
-func Error(error string) {
-	errorLogger.Println(error)
+func Error(v ...interface{}) {
+	errorLogger.Println(v...)
 }
 
 func Errorf(format string, v ...interface{}) {
