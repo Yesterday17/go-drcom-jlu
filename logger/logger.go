@@ -4,31 +4,52 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 )
 
 type Logger struct {
 	logger *log.Logger
+	Prefix string
+	Icon   string
 }
 
-func (l *Logger) Init(name string, w io.Writer) {
-	l.logger = log.New(w, fmt.Sprintf("[GDJ][%s]", name), log.LstdFlags)
+func NewLogger(out io.Writer, name string, icon string, flag int) *Logger {
+	return &Logger{
+		logger: log.New(out, "", flag),
+		Prefix: fmt.Sprintf("[GDJ][%s]", name),
+		Icon:   icon,
+	}
+}
+
+func (l *Logger) SetPrefix() {
+	prefix := fmt.Sprintf("%s[%s] ", l.Prefix, time.Now().Format("15:04:05"))
+	if l.Icon != "" {
+		prefix += l.Icon + " "
+	}
+	l.logger.SetPrefix(prefix)
 }
 
 func (l *Logger) Print(text string) {
+	l.SetPrefix()
 	l.logger.Print(text)
 }
 
 func (l *Logger) Printf(format string, v ...interface{}) {
+	l.SetPrefix()
 	l.logger.Printf(format, v...)
 }
 
-var debugLogger, infoLogger, warnLogger, errorLogger *log.Logger
+func (l *Logger) Println(v ...interface{}) {
+	l.logger.Println(v...)
+}
+
+var debugLogger, infoLogger, warnLogger, errorLogger *Logger
 
 func Init(dw, iw, ww, ew io.Writer) {
-	debugLogger = log.New(dw, "[GDJ][DEBUG] ", log.LstdFlags)
-	infoLogger = log.New(iw, "[GDJ][INFO] ", log.LstdFlags)
-	warnLogger = log.New(ww, "[GDJ][WARN] ", log.LstdFlags)
-	errorLogger = log.New(ew, "[GDJ][ERROR] ☒ ", log.LstdFlags)
+	debugLogger = NewLogger(dw, "DEBUG", "", 0)
+	infoLogger = NewLogger(iw, "INFO", "", 0)
+	warnLogger = NewLogger(ww, "WARN", "⚠️", 0)
+	errorLogger = NewLogger(ew, "ERROR", "☒", log.Lshortfile)
 }
 
 func Debug(info string) {

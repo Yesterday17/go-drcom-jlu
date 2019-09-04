@@ -72,7 +72,7 @@ func ReadConfig(path string) (*drcom.Config, error) {
 	}
 
 	// Write change to config file
-	jsonConfig, _ := json.Marshal(config)
+	jsonConfig, _ := json.MarshalIndent(config, "", "  ")
 	if err := ioutil.WriteFile(path, jsonConfig, os.FileMode(0644)); err != nil {
 		return nil, err
 	}
