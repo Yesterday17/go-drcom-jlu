@@ -66,6 +66,7 @@ type Client struct {
 	conn           *net.UDPConn
 	ChallengeTimes int
 	Count          int
+	FailCount      int
 	timeout        time.Duration
 	retry          int
 	logoutCh       chan struct{}
@@ -92,6 +93,7 @@ func New(cfg *Config) *Client {
 		salt:           make([]byte, 4),
 		ChallengeTimes: 0,
 		Count:          0,
+		FailCount:      0,
 		logoutCh:       make(chan struct{}, 1),
 	}
 }
@@ -134,6 +136,19 @@ func (c *Client) WriteWithTimeout(b []byte) (err error) {
 		return
 	}
 	_, err = c.conn.Write(b)
+
+	if err != nil && err.(net.Error).Timeout() {
+		c.FailCount++
+		if c.FailCount > c.config.Retry {
+			logger.Errorf("WriteWithTimeout failed for %d times, exiting...", c.config.Retry)
+			os.Exit(2)
+		}
+	} else if err != nil {
+		logger.Errorf("WriteWithTimeout failed: %v", err)
+		os.Exit(3)
+	} else {
+		c.FailCount = 0
+	}
 	return
 }
 
@@ -142,5 +157,18 @@ func (c *Client) ReadWithTimeout(b []byte) (err error) {
 		return
 	}
 	_, err = c.conn.Read(b)
+
+	if err != nil && err.(net.Error).Timeout() {
+		c.FailCount++
+		if c.FailCount > c.config.Retry {
+			logger.Errorf("ReadWithTimeout failed for %d times, exiting...", c.config.Retry)
+			os.Exit(2)
+		}
+	} else if err != nil {
+		logger.Errorf("ReadWithTimeout failed: %v", err)
+		os.Exit(3)
+	} else {
+		c.FailCount = 0
+	}
 	return
 }
