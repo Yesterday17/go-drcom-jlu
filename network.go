@@ -173,9 +173,16 @@ func watchNetStatus() {
 				}
 
 				// TODO: 检查网络可用性
+				// 有线连接代替无线连接
+				if infNow := Interfaces[activeMAC]; !inf.IsWireless && infNow.IsWireless {
+					_ = client.Close()
+					activeMAC = ""
+					inf.SSID = ""
+					logger.Infof("- Interface %s disconnected: %s", inf.Name, inf.Address)
+				}
+
 				if activeMAC == "" {
 					logger.Debugf("%v", update)
-					logger.Debug("Network connected, connecting...")
 					NewClient(MAC)
 				}
 			} else if update.Flags < 65536 &&
